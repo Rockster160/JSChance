@@ -14,14 +14,14 @@ class JsChance {
 
   static textToJson(text) {
     let lines = text.split("\n").filter(function(word) {
-      return word.replace(/\s/ig, "").length > 0
+      return word.replace(/\/\/.*/ig, "").replace(/\s/ig, "").length > 0
     })
 
     let json = {}, current_obj = json, parents = [], prev_key = undefined, prev_indent = -1
     let regx_indent = new RegExp("  ", "g")
 
     lines.forEach(function(line) {
-      let key = line.trim()
+      let key = line.replace(/\/\/.*/ig, "").trim()
       let current_indent = line.match(/\s+/g)?.[0]?.match(regx_indent)?.length || 0
 
       if (current_indent > prev_indent) {
