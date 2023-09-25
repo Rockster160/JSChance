@@ -5,7 +5,6 @@
     <title></title>
     <script src="jschance.js"></script>
     <script type="text/javascript">
-
       let parser = new JsChance(`
       animal
         cow
@@ -29,7 +28,39 @@
             [animal] traps
             battlefield
       `)
-      console.log(parser.landscape());
+      console.log(parser.landscape()); // Get a random landscape
+      console.log(parser.options); // Show a hash of all options
+      console.log(parser.branches()); // Show an array of arrays of all nested values
+
+      let parser2 = new JsChance(`
+      shapes
+        general
+          rod
+          plate
+          gear
+
+        solids
+          [shapes.general]
+          block
+          dust
+
+        gems
+          [shapes.solids]
+          shard
+          gem
+
+        metals
+          [shapes.solids]
+          nugget
+          ingot
+
+        radioactives
+          [shapes.metals]
+          something
+      `)
+      console.log(parser2.shapes()); // Get a random shape
+      console.log(parser2.options); // Show a hash of all options
+      console.log(parser2.branches()); // Show an array of arrays of all nested values
     </script>
   </head>
   <body>
@@ -45,9 +76,8 @@
     <h3>TODO</h3>
     <ul>
       <li>Weighted items ^2 makes an item twice as likely, ^0.1 for 1/10th as likely as others</li>
-      <li>Inline? generate = [landscape.[landtype].[color]]</li>
+      <li>Inline? generate = [[landscape.[landtype].[color]]</li>
       <li>Lookahead/behind {a} [animal] becomes AN antelope, </li>
     </ul>
-
   </body>
 </html>

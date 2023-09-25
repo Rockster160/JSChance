@@ -6,6 +6,8 @@ class JsChance {
     this.genFunctions()
   }
 
+  static regx_square_brackets = /\[([^\[]*?)\]/ig
+
   static deepFind(obj, keys) {
     let found = obj
     keys.forEach(function(key) { found = found[key] })
@@ -74,22 +76,34 @@ class JsChance {
 
   static parseText(text, parser) {
     let self = this
-    let regx_square_brackets = /\[([^\[]*?)\]/ig
 
-    do {
-      text = text.replace(regx_square_brackets, function(full, group1) {
+    while (this.isBracketWrapped(text)) {
+      text = text.replace(/\[([^\[]*?)\]/ig, function(full, group1) {
         if (parser && typeof parser[group1] == "function") {
           return parser[group1]()
         } else {
           return self.rand(group1)
         }
       })
-    } while (regx_square_brackets.test(text))
+    }
 
     return text
   }
 
+  static bracketWrappedRegX() {
+    return /\[([^\[]*?)\]/i
+  }
+
+  static isBracketWrapped(str) {
+    return this.bracketWrappedRegX().test(str)
+  }
+
+  branches() {
+    return this.branchesFromJson(this.options)
+  }
+
   branchesFromJson(json, parents) {
+    json = json || this.json
     parents = parents || []
     let branches = []
 
@@ -104,6 +118,39 @@ class JsChance {
     return branches.map(function(branch) {
       return [...parents, ...branch]
     })
+  }
+
+  collapseOptions(opts) {
+    opts = opts || this.options
+    for (let [key, vals] of Object.entries(opts)) {
+      let collapsed = false
+      if (JsChance.isBracketWrapped(key)) {
+        let match_data = key.match(JsChance.bracketWrappedRegX())
+        let calls = match_data[1].split(".")
+        let dig = this.options
+        calls.forEach(dig_key => {
+          if (dig.hasOwnProperty(dig_key)) {
+            dig = dig[dig_key]
+          }
+        })
+        if (dig) {
+          collapsed = true
+          delete opts[key]
+          this.branchesFromJson(dig).forEach(trunk => {
+            let dug = opts
+            trunk.forEach(branch => {
+              dug[branch] = dug[branch] || {}
+              dug = dug[branch]
+            })
+          })
+        }
+      }
+      if (collapsed) {
+        // If we collapsed, we might have another key that needs to be expanded, so try again
+        this.collapseOptions(opts)
+      }
+      this.collapseOptions(vals)
+    }
   }
 
   genFunction(fnName, json_options) {
@@ -124,5 +171,10 @@ class JsChance {
     for (let [key, opts] of Object.entries(this.json)) {
       this.genFunction(key, opts)
     }
+    this.collapseOptions()
   }
+}
+
+if (typeof module !== 'undefined' && module.exports) {
+  module.exports = JsChance;
 }
